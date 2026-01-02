@@ -1,7 +1,5 @@
 """Tests for the intrusive doubly-linked list implementation."""
 
-import pytest
-
 from leasedkeyq.linkedlist import DoublyLinkedList, Node
 
 

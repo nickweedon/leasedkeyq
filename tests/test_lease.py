@@ -18,7 +18,7 @@ def test_lease_creation() -> None:
 def test_lease_immutability() -> None:
     """Test that leases are immutable."""
     lease = Lease.create("test-key")
-    with pytest.raises(Exception):  # FrozenInstanceError
+    with pytest.raises(AttributeError):  # FrozenInstanceError
         lease.token = "new-token"  # type: ignore[misc]
 
 

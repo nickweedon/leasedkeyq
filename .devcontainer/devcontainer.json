@@ -32,7 +32,6 @@
   },
 
   "postCreateCommand": "uv sync --all-extras",
-  "postStartCommand": "sudo groupmod -g $(stat -c '%g' /var/run/docker.sock) docker 2>/dev/null || true; sudo usermod -aG docker vscode 2>/dev/null || true",
 
   "features": {},
 

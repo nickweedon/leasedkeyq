@@ -43,6 +43,7 @@ class LeasedKeyQueue(Generic[K, V]):
         self._available: dict[K, Node[K, V]] = {}
         self._in_flight: dict[str, LeaseRecord[K, V]] = {}
         self._leases_by_key: dict[K, str] = {}
+        self._acknowledged: set[str] = set()  # Track acknowledged lease tokens
         self._list = DoublyLinkedList[K, V]()
         self._default_lease_timeout = default_lease_timeout
         self._reaper_task: asyncio.Task[None] | None = None
@@ -70,7 +71,7 @@ class LeasedKeyQueue(Generic[K, V]):
                     await self._reaper_task
                 except asyncio.CancelledError:
                     pass
-                self._reaper_task = None
+                # Keep reference so tests can check task.done()
 
             # Return all in-flight items to available (front of queue)
             for record in list(self._in_flight.values()):
@@ -286,6 +287,9 @@ class LeasedKeyQueue(Generic[K, V]):
             if self._closed:
                 raise QueueClosedError("Cannot ack in a closed queue")
 
+            if lease.token in self._acknowledged:
+                raise LeaseAlreadyAcknowledgedError(f"Lease {lease.token} already acknowledged")
+
             if lease.token not in self._in_flight:
                 raise InvalidLeaseError(f"Unknown lease token: {lease.token}")
 
@@ -295,6 +299,7 @@ class LeasedKeyQueue(Generic[K, V]):
 
             # Mark as acknowledged and remove
             record.acknowledged = True
+            self._acknowledged.add(lease.token)
             del self._in_flight[lease.token]
             del self._leases_by_key[lease.key]
 
@@ -318,6 +323,9 @@ class LeasedKeyQueue(Generic[K, V]):
 
     async def _release_internal(self, lease: Lease[K], *, requeue_front: bool) -> None:
         """Internal release implementation (must be called with lock held)."""
+        if lease.token in self._acknowledged:
+            raise LeaseAlreadyAcknowledgedError(f"Lease {lease.token} already acknowledged")
+
         if lease.token not in self._in_flight:
             raise InvalidLeaseError(f"Unknown lease token: {lease.token}")
 
@@ -405,9 +413,9 @@ class LeasedKeyQueue(Generic[K, V]):
 
                     # Find expired leases
                     for token, record in self._in_flight.items():
-                        age = now - record.created_at
-                        timeout = record.timeout or 0
                         # DEBUG
+                        # age = now - record.created_at
+                        # timeout = record.timeout or 0
                         # print(f"[REAPER check #{check_count}] token={token[:8]}, age={age:.3f}, timeout={timeout:.3f}, expired={record.is_expired(now)}")
                         if record.is_expired(now):
                             expired.append(token)
@@ -429,7 +437,7 @@ class LeasedKeyQueue(Generic[K, V]):
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception:
                 # Log error and continue (in production, add logging)
                 import traceback
                 traceback.print_exc()
