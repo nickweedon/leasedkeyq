@@ -166,8 +166,6 @@ make test       # pytest with coverage
 ./release.sh [VERSION]  # Auto-increments if VERSION omitted
 ```
 
-See [.claude/commands/README.md](.claude/commands/README.md) for command details.
-
 ## Code Style Guidelines
 
 - **Type hints**: 100% coverage, strict mypy mode
