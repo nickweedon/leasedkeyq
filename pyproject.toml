@@ -10,7 +10,7 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 authors = [
-    { name = "Your Name", email = "your.email@example.com" }
+    { name = "Nick Weedon", email = "nick@weedon.org.au" }
 ]
 keywords = ["asyncio", "queue", "lease", "fifo", "async"]
 classifiers = [
@@ -36,10 +36,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/leasedkeyq"
-Documentation = "https://github.com/yourusername/leasedkeyq/blob/main/README.md"
-Repository = "https://github.com/yourusername/leasedkeyq"
-Issues = "https://github.com/yourusername/leasedkeyq/issues"
+Homepage = "https://github.com/nickweedon/leasedkeyq"
+Documentation = "https://github.com/nickweedon/leasedkeyq/blob/main/README.md"
+Repository = "https://github.com/nickweedon/leasedkeyq"
+Issues = "https://github.com/nickweedon/leasedkeyq/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/leasedkeyq"]
