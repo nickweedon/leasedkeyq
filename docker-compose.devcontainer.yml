@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  leasedkeyq-vscode:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CREATE_VSCODE_USER: "true"
+    volumes:
+      - .:/workspace:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - HOST_USER=${USER}
+    user: vscode
+    command: sleep infinity
