@@ -259,3 +259,47 @@ async def test_context_manager() -> None:
     # Queue should be closed after context exit
     with pytest.raises(QueueClosedError):
         await queue.put("key2", 200)
+
+
+@pytest.mark.asyncio
+async def test_close_with_mixed_state() -> None:
+    """Test closing queue with reaper active, available items, and mixed in-flight items."""
+    queue = LeasedKeyQueue[str, int](default_lease_timeout=10.0)
+    await queue.start()
+
+    # Add items in different states
+    await queue.put("available1", 100)
+    await queue.put("available2", 200)
+    await queue.put("inflight1", 300)
+    await queue.put("inflight2", 400)
+    await queue.put("acknowledged", 500)
+
+    # Get some items (in-flight)
+    _, _, lease1 = await queue.get()  # inflight1
+    _, _, lease2 = await queue.get()  # inflight2
+    _, _, lease3 = await queue.get()  # acknowledged
+
+    # Acknowledge one lease
+    await queue.ack(lease3)
+
+    # Verify state before close
+    assert await queue.qsize() == 2  # available1, available2
+    assert await queue.inflight_size() == 2  # inflight1, inflight2
+    assert queue._reaper_task is not None
+    assert not queue._reaper_task.done()
+
+    # Close should return in-flight items to available and stop reaper
+    await queue.close()
+
+    # Verify reaper stopped
+    assert queue._reaper_task.done()
+
+    # Queue should be closed
+    assert queue._closed
+
+    # Operations should raise QueueClosedError
+    with pytest.raises(QueueClosedError):
+        await queue.get()
+
+    with pytest.raises(QueueClosedError):
+        await queue.put("new", 999)
