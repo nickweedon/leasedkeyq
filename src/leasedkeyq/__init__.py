@@ -11,7 +11,7 @@ from leasedkeyq.errors import (
 from leasedkeyq.lease import Lease, LeaseRecord
 from leasedkeyq.types import InFlightPolicy
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 __all__ = [
     "LeasedKeyQueue",
